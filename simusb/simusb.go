@@ -135,6 +135,7 @@ func (u *USBMSsession) Start(enableWifi, mountPart bool) error {
 			u.unplugUSB()
 			return errors.New("could not mount temporary FS")
 		}
+		u.partMounted = true
 		u.fbI.Println("Internal storage remounted!")
 		// Now that we have a new mountpoint, change the current onboard mount point,
 		// and change the current working directory for clients to use.
@@ -144,13 +145,9 @@ func (u *USBMSsession) Start(enableWifi, mountPart bool) error {
 	}
 	if enableWifi {
 		// Note, we are checking this several times, as it can take a while for Nickel to kill the Wifi
-		for i := 0; i < 10; i++ {
-			if u.wifiIsEnabled() && i == 9 {
-				u.wifiEnabledInUSBMS = true
-				u.fbI.Println("Wifi already enabled!")
-				break
-			}
-			time.Sleep(500 * time.Millisecond)
+		if u.wifiIsEnabled(5 * time.Second) {
+			u.fbI.Println("Wifi Already enabled")
+			u.wifiEnabledInUSBMS = true
 		}
 		if !u.wifiEnabledInUSBMS {
 			u.fbI.Println("Attempting to enable Wifi")
@@ -205,6 +202,7 @@ func (u *USBMSsession) End(waitForContentImport bool) error {
 			// The linux reboot man suggests that rebooting without calling
 			// sync() could lead to data loss
 			u.fbI.Println("Unount Failed...Rebooting")
+			time.Sleep(1 * time.Second)
 			unix.Sync()
 			unix.Reboot(syscall.LINUX_REBOOT_CMD_RESTART)
 		}
@@ -248,16 +246,24 @@ func (u *USBMSsession) unplugUSB() {
 
 // A basic check to see if Wifi is already enabled. A working network will have
 // dhcpcd and wpa_supplicant running
-func (u *USBMSsession) wifiIsEnabled() bool {
-	_, err := getPID("wpa_supplicant")
-	if err != nil {
-		return false
+func (u *USBMSsession) wifiIsEnabled(timeout time.Duration) bool {
+	sdioPres, wifiModPres := false, false
+	start := time.Now()
+	for {
+		if isKernelModLoaded("sdio_wifi_pwr") {
+			sdioPres = true
+		}
+		if isKernelModLoaded(u.nickelVars.wifiModule) {
+			wifiModPres = true
+		}
+		if !sdioPres && !wifiModPres {
+			return false
+		}
+		if time.Since(start) > timeout {
+			return true
+		}
+		time.Sleep(250 * time.Millisecond)
 	}
-	_, err = getPID("dhcpcd")
-	if err != nil {
-		return false
-	}
-	return true
 }
 
 func isKernelModLoaded(moduleName string) bool {
