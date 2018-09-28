@@ -1,3 +1,23 @@
+/*
+	kobo-sim-usb - Enter USBMS mode for kobo devices
+    Copyright (C) 2018 Sherman Perry
+
+    This file is part of kobo-sim-usb.
+
+    kobo-sim-usb is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    kobo-sim-usb is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with kobo-sim-usb.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package main
 
 import (
@@ -24,7 +44,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	err = u.Start(true)
+	err = u.Start(true, true)
 	if err != nil {
 		fmt.Println(err)
 		return
