@@ -30,6 +30,7 @@ import (
 )
 
 func main() {
+	// Set up a FBInk instance
 	cfg := gofbink.FBInkConfig{}
 	rCfg := gofbink.RestrictedConfig{}
 	rCfg.IsQuiet = true
@@ -40,24 +41,32 @@ func main() {
 	defer fb.Close()
 	fb.Init(&cfg)
 
+	// Setup a kobo-sim-usb instance
 	u, err := simusb.New(fb)
 	if err != nil {
 		fmt.Println(err)
 	}
+	// Start it. No errors means that USBMS mode was entered
+	// successfully with Wifi and/or partition mounted and enabled
 	err = u.Start(true, true)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	// kobo-sim-usb sets the current working directory to the new
+	// mountpoint, if required
 	wd, _ := os.Getwd()
 	fmt.Println("Current dir is:", wd)
 	fmt.Println("Sleeping for 10s")
 	time.Sleep(10 * time.Second)
 	fmt.Println("Leaving USBMS")
+	// When you are finished, call the End() method
 	err = u.End(true)
 	if err != nil {
 		fmt.Println(err)
 	}
+	// kobo-sim-usb resets the current working directory to the
+	// original value upon ending.
 	wd, _ = os.Getwd()
 	fmt.Println("Current dir is:", wd)
 }
