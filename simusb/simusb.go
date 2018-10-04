@@ -52,10 +52,15 @@ const internalMemoryDev = "/dev/mmcblk0p3"
 // USBMSsession contains the information required to manage entering
 // and leaving Nickels USBMS mode
 type USBMSsession struct {
-	origWD             string
-	currWD             string
-	relWD              string
-	CurOnboardMnt      string
+	origWD string
+	currWD string
+	relWD  string
+	// The new mountpoint for the user partition
+	CurOnboardMnt string
+	// The new mountpoint for the external SD card, if it exists.
+	// Note, this will be an empty string if the SD card does not exist,
+	// or is not mounted.
+	CurSDMnt           string
 	wifiEnabledInUSBMS bool
 	partMounted        bool
 	nickelVars         struct {
