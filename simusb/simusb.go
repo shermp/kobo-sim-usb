@@ -70,7 +70,8 @@ type USBMSsession struct {
 		netInterface   string
 		ldLibPath      string
 	}
-	fbI *gofbink.FBInk
+	fbI      *gofbink.FBInk
+	isClosed bool
 }
 
 func getPID(processName string) (int, error) {
@@ -109,6 +110,7 @@ func New(fbI *gofbink.FBInk) (u *USBMSsession, err error) {
 // for the Kobo internal memory
 func (u *USBMSsession) Start(enableWifi, mountPart bool) error {
 	err := error(nil)
+	u.isClosed = false
 	u.fbI.Println("Attempting to launch into USBMS session. Please wait...")
 	onboardMntCstr := C.CString(onboardMntPoint)
 	defer C.free(unsafe.Pointer(onboardMntCstr))
@@ -192,6 +194,12 @@ func (u *USBMSsession) Start(enableWifi, mountPart bool) error {
 
 // End carries out the process of safely ending a USBMS session
 func (u *USBMSsession) End(waitForContentImport bool) error {
+	// Make it safe to call End() multiple times
+	if u.isClosed {
+		return nil
+	} else {
+		u.isClosed = true
+	}
 	err := error(nil)
 	// Turns out, if we fail to change our working directory, the unmount fails
 	os.Chdir("/")
